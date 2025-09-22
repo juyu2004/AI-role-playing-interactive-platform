@@ -1,5 +1,42 @@
 <template>
   <div class="role-select-container">
+    <!-- 新的头部导航 -->
+    <div class="top-navigation">
+      <!-- 左侧Logo -->
+      <div class="logo-container">
+        <div class="logo">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="rgba(255,255,255,0.9)"/>
+            <path d="M2 17L12 22L22 17" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M2 12L12 17L22 12" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="logo-text">AI角色对话</span>
+        </div>
+      </div>
+
+      <!-- 右侧用户控制区域 -->
+      <div class="user-controls">
+        <!-- 未登录状态显示登录注册按钮 -->
+        <template v-if="!isLoggedIn">
+          <button class="login-btn" @click='handleLogin'>登录</button>
+          <button class="register-btn" @click="handleRegister">注册</button>
+        </template>
+
+        <!-- 已登录状态显示用户头像和退出按钮 -->
+        <template v-else>
+          <div class="user-profile">
+            <img
+              :src="userAvatar || 'https://picsum.photos/id/64/40/40'"
+              :alt="'用户头像'"
+              class="user-avatar"
+            />
+            <button class="logout-btn" @click="handleLogout">退出登录</button>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- 原有的页面内容 -->
     <header class="header">
       <h1 class="title">Choose your Role to Talk</h1>
       <div class="search-container">
@@ -16,6 +53,7 @@
       </div>
     </header>
 
+    <!-- 角色卡片部分保持不变 -->
     <main class="roles-content">
       <div v-if="loading" class="loading-container">
         <div class="loading-spinner"></div>
@@ -75,6 +113,10 @@ const loading = ref(false)
 const error = ref('')
 const hoveredRoleId = ref('')
 
+// 新增用户状态相关变量
+const isLoggedIn = ref(false) // 模拟用户登录状态
+const userAvatar = ref('') // 模拟用户头像
+
 // 模拟角色数据，当API不可用时使用
 const mockRoles: Role[] = [
   {
@@ -120,6 +162,32 @@ const mockRoles: Role[] = [
     description: '唐代著名浪漫主义诗人'
   }
 ]
+
+// 新增登录处理函数
+const handleLogin = () => {
+  // 实际项目中这里应该跳转到登录页面
+  console.log('登录按钮点击')
+  // 模拟登录成功
+  router.push({ name: 'login' })
+  isLoggedIn.value = true
+  userAvatar.value = 'https://picsum.photos/id/64/40/40'
+  // 跳转到角色选择页面
+}
+
+// 新增注册处理函数
+const handleRegister = () => {
+  console.log('注册按钮点击')
+  // 模拟跳转到注册页面
+  router.push({ name: 'register' })
+}
+
+// 新增退出登录处理函数
+const handleLogout = () => {
+  // 实际项目中这里应该清除用户登录状态
+  console.log('退出登录按钮点击')
+  isLoggedIn.value = false
+  userAvatar.value = ''
+}
 
 // 获取角色列表
 const fetchRoles = async () => {
@@ -176,240 +244,141 @@ const selectRole = (roleId: string) => {
 // 组件挂载时获取角色列表
 onMounted(() => {
   fetchRoles()
+  // 模拟检查用户登录状态
+  // 在实际项目中，这里应该从localStorage或API检查用户登录状态
+  // isLoggedIn.value = localStorage.getItem('userToken') !== null
 })
 </script>
 
+<style scoped src="../home/index.css"></style>
+
 <style scoped>
-.role-select-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
+/* 新增的导航栏样式 */
+.top-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.header {
-  max-width: 1200px;
-  margin: 0 auto 2rem;
-  text-align: center;
+/* Logo样式 */
+.logo-container {
+  display: flex;
+  align-items: center;
 }
 
-.title {
-  font-size: 2.5rem;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.logo-text {
   color: white;
-  margin-top: 100px;
-  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  text-align: center;
+  letter-spacing: 0.5px;
 }
 
-.search-container {
-  margin-top: 30px;
-  position: relative;
-  max-width: 500px;
-  margin: 0 auto;
+/* 用户控制区域 */
+.user-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.search-input {
-  width: 100%;
-  padding: 1rem 3rem;
-  border: none;
-  border-radius: 50px;
-  font-size: 1rem;
-  outline: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
-}
-
-.search-input:focus {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-.search-icon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.roles-content {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.loading-container,
-.error-container,
-.empty-container {
-  text-align: center;
-  padding: 4rem;
-  color: white;
-}
-
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 1s ease-in-out infinite;
-  margin: 0 auto 1rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.retry-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1.5rem;
+/* 登录和注册按钮 */
+.login-btn,
+.register-btn {
+  padding: 0.75rem 1.5rem;
   border: none;
   border-radius: 25px;
-  background: white;
-  color: #667eea;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.retry-button:hover {
+.login-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.login-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.register-btn {
+  background: white;
+  color: #667eea;
+}
+
+.register-btn:hover {
   background: #f0f0f0;
   transform: translateY(-2px);
 }
 
-.roles-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
+/* 用户资料区域 */
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.role-card {
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+/* 用户头像 */
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  object-fit: cover;
+}
+
+/* 退出登录按钮 */
+.logout-btn {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  position: relative;
 }
 
-.role-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
-}
-
-.avatar-container {
-  position: relative;
-  width: 100%;
-  height: 160px;
-  overflow: hidden;
-}
-
-.role-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.role-info {
-  padding: 1.2rem;
-}
-
-.role-name {
-  font-size: 1.3rem;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.role-category {
-  display: inline-block;
-  background: #e1e8ed;
-  color: #657786;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  margin-bottom: 0.8rem;
-}
-
-.role-description {
-  color: #666;
-  line-height: 1.5;
-  font-size: 0.9rem;
-}
-
-.role-card:hover .role-avatar {
-  transform: scale(1.1);
-}
-
-.avatar-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 1.5rem;
-}
-
-.avatar-overlay.active {
-  opacity: 1;
-}
-
-.view-details {
-  color: white;
-  font-weight: 600;
-  font-size: 1.1rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  background: rgba(102, 126, 234, 0.9);
-  padding: 0.5rem 1.5rem;
-  border-radius: 25px;
-  transition: all 0.3s ease;
-}
-
-.role-info {
-  padding: 1.5rem;
-}
-
-.role-name {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.role-category {
-  display: inline-block;
-  background: #e1e8ed;
-  color: #657786;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  margin-bottom: 1rem;
-}
-
-.role-description {
-  color: #666;
-  line-height: 1.6;
-  font-size: 0.95rem;
+.logout-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .role-select-container {
+  .top-navigation {
     padding: 1rem;
   }
 
-  .title {
-    font-size: 2rem;
+  .logo-text {
+    font-size: 1.2rem;
   }
 
-  .roles-grid {
-    grid-template-columns: 1fr;
+  .login-btn,
+  .register-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .user-controls {
+    gap: 0.5rem;
   }
 }
 </style>
+

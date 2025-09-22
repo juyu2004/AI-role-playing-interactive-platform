@@ -1,0 +1,743 @@
+/* 对话框容器 */
+.chat-container {
+  display: flex;
+  height: 100vh;
+  background: #f5f7fa;
+}
+
+/* 左侧历史对话列表 */
+.chat-sidebar {
+  width: 320px;
+  background: white;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* 侧边栏头部 */
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e9ecef;
+  background: white;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.new-chat-button {
+  background: #818cf8;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.new-chat-button:hover {
+  background: #6366f1;
+  transform: rotate(90deg);
+}
+
+/* 历史对话列表 */
+.chat-history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+/* 历史对话项 */
+.chat-history-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.chat-history-item:hover {
+  background: #f8f9fa;
+}
+
+.chat-history-item.active {
+  background: #eef2ff;
+}
+
+/* 历史对话头像 */
+.chat-history-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+}
+
+.chat-history-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 历史对话内容 */
+.chat-history-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-history-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+.chat-history-title .role-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #343a40;
+  margin: 0;
+}
+
+.last-message-time {
+  font-size: 0.75rem;
+  color: #adb5bd;
+}
+
+.last-message-preview {
+  font-size: 0.85rem;
+  color: #868e96;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 删除对话按钮 */
+.delete-chat-button {
+  background: none;
+  border: none;
+  color: #adb5bd;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  opacity: 0;
+}
+
+.chat-history-item:hover .delete-chat-button {
+  opacity: 1;
+}
+
+.delete-chat-button:hover {
+  background: #ffe8e8;
+  color: #ef4444;
+}
+
+/* 右侧主要聊天区域 */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 顶部导航栏 */
+.chat-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+  color: #868e96;
+}
+
+.back-button:hover {
+  background: #f8f9fa;
+}
+
+.role-info {
+  display: flex;
+  align-items: center;
+  margin-left: 1rem;
+  flex: 1;
+}
+
+/* 修改顶部导航栏中的角色头像样式 */
+.role-info .role-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 1rem;
+  border: 2px solid #818cf8;
+}
+
+/* 保留消息区域的角色头像样式，但使用更具针对性的选择器 */
+.avatar-small .role-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.role-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #343a40;
+  margin: 0;
+}
+
+.role-status {
+  font-size: 0.875rem;
+  color: #868e96;
+  margin: 0;
+}
+
+/* 优化清除历史按钮样式 */
+.clear-history-button {
+  background: #343a40;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.clear-history-button:hover {
+  background: #495057;
+  color: #f8f9fa;
+}
+
+/* 对话消息区域 */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e0e7ff 100%);
+}
+
+.loading-messages,
+.error-messages,
+.empty-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #868e96;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(129, 140, 248, 0.3);
+  border-radius: 50%;
+  border-top-color: #818cf8;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.retry-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  background: #818cf8;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+  background: #6366f1;
+  transform: translateY(-2px);
+}
+
+/* 消息样式优化 */
+/* 修改消息包装器，将头像和气泡框中线对齐 */
+.message-wrapper {
+  display: flex;
+  align-items: center; /* 使用center实现中线对齐 */
+  gap: 0.75rem;
+  max-width: 75%;
+}
+
+/* 角色消息 - 头像在左，对话框在右 */
+.message-wrapper:not(.user-message) {
+  align-self: flex-start;
+  justify-content: flex-start;
+}
+
+/* 用户消息 - 头像在右，对话框在左 */
+.message-wrapper.user-message {
+  align-self: flex-end;
+  justify-content: flex-end;
+  flex-direction: row-reverse;
+}
+
+.avatar-small {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 100%;
+  overflow: hidden;
+}
+
+.role-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border-color: #6366f1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 隐藏原来的img标签，以防影响新样式 */
+.avatar-small img {
+  display: none;
+}
+
+.avatar-small img {
+  width: 100%;
+  height: 100%;
+  border-radius: 100%;
+  object-fit: cover;
+}
+
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-bubble {
+  padding: 0.2rem 0.5rem;
+  border-radius: 22px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+  max-width: calc(100% - 50px); /* 确保消息气泡不会与头像重叠 */
+}
+
+/* 角色消息气泡样式 - 左下角特殊圆角 */
+.message-bubble:not(.user) {
+  background: white;
+  color: #343a40;
+  border-bottom-left-radius: 8px;
+  order: 2; /* 确保气泡在头像右侧 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 用户消息气泡样式 - 右下角特殊圆角 */
+.message-bubble.user {
+  background: #818cf8;
+  color: white;
+  border-bottom-right-radius: 8px;
+  order: 1; /* 确保气泡在头像左侧 */
+  box-shadow: 0 2px 4px rgba(129, 140, 248, 0.2);
+}
+
+/* 正在输入提示样式优化 */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 75%;
+  align-self: flex-start;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: 0.5rem 1rem;
+  background: white;
+  border-radius: 22px;
+  border-bottom-left-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.typing-dots .dot {
+  width: 8px;
+  height: 8px;
+  background: #818cf8;
+  border-radius: 50%;
+  animation: typing 1.4s infinite ease-in-out both;
+}
+
+.typing-dots .dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots .dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+/* 底部输入区域 */
+.chat-input-container {
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #e9ecef;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.input-wrapper {
+  display: flex;
+  gap: 0.75rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 25px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.chat-input:focus {
+  border-color: #818cf8;
+}
+
+.chat-input:disabled {
+  background: #f8f9fa;
+  cursor: not-allowed;
+}
+
+/* 语音按钮样式 */
+.voice-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: #818cf8;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.voice-button:hover:not(:disabled) {
+  background: #6366f1;
+  transform: scale(1.05);
+}
+
+.voice-button:disabled {
+  background: #dee2e6;
+  cursor: not-allowed;
+}
+
+.voice-button.recording {
+  background: #ef4444;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 发送按钮样式 */
+.send-button {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: #818cf8;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #6366f1;
+  transform: scale(1.05);
+}
+
+.send-button:disabled {
+  background: #dee2e6;
+  cursor: not-allowed;
+}
+
+/* 录制指示器 */
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5rem;
+  color: #868e96;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+/* 音频消息样式 */
+.audio-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.message-bubble.user .audio-message {
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+.message-bubble:not(.user) .audio-message {
+  border-top-color: rgba(0, 0, 0, 0.05);
+}
+
+.play-button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(129, 140, 248, 0.1);
+  color: #818cf8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.message-bubble.user .play-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.play-button:hover {
+  background: rgba(129, 140, 248, 0.2);
+}
+
+.message-bubble.user .play-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.play-button.playing {
+  background: rgba(129, 140, 248, 0.2);
+}
+
+.message-bubble.user .play-button.playing {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.audio-progress {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.audio-timeline {
+  flex: 1;
+  height: 4px;
+  background: rgba(129, 140, 248, 0.2);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.message-bubble.user .audio-timeline {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.audio-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #818cf8;
+  border-radius: 2px;
+  transition: width 0.1s ease;
+}
+
+.message-bubble.user .audio-progress-bar {
+  background: white;
+}
+
+.audio-duration {
+  font-size: 0.75rem;
+  color: #868e96;
+  flex-shrink: 0;
+  min-width: 35px;
+  text-align: right;
+}
+
+.message-bubble.user .audio-duration {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 响应式设计 */
+@media (max-width: 1024px) {
+  .chat-sidebar {
+    width: 280px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chat-container {
+    position: relative;
+  }
+
+  .chat-sidebar {
+    position: absolute;
+    left: -320px;
+    top: 0;
+    bottom: 0;
+    z-index: 20;
+    transition: left 0.3s ease;
+  }
+
+  .chat-sidebar.open {
+    left: 0;
+  }
+
+  .message-wrapper {
+    max-width: 85%;
+  }
+
+  .chat-input-container {
+    padding: 0.75rem;
+  }
+
+  .role-name {
+    font-size: 1.1rem;
+  }
+}
+
+/* 隐藏全局页面滚动条 */
+html {
+  overflow: -moz-scrollbars-none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+/* 优化聊天消息区域的滚动条 */
+.chat-messages {
+  overflow-y: auto;
+  /* Firefox */
+  scrollbar-width: none;
+  /* IE and Edge */
+  -ms-overflow-style: none;
+}
+
+/* WebKit浏览器（Chrome, Safari等） */
+.chat-messages::-webkit-scrollbar {
+  display: none;
+}
+
+/* 如果需要自定义滚动条样式而不是完全隐藏，可以使用以下样式 */
+/* 这种方式在保持滚动功能的同时美化滚动条 */
+.custom-scrollbar {
+  overflow-y: auto;
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(129, 140, 248, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(129, 140, 248, 0.3);
+  border-radius: 20px;
+  border: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(129, 140, 248, 0.5);
+}
