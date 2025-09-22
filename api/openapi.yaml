@@ -61,6 +61,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChatResponse'
+  /api/chat/stream:
+    post:
+      summary: SSE 流式聊天（占位）
+      responses:
+        '200':
+          description: text/event-stream
+  /api/asr:
+    post:
+      summary: 语音识别（占位）
+      responses:
+        '200':
+          description: 识别文本
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  text:
+                    type: string
+  /api/tts:
+  /api/auth/login:
+    post:
+      summary: 用户登录（占位，返回示例令牌）
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /api/conversations:
+    get:
+      summary: 列出会话（占位）
+      responses:
+        '200':
+          description: OK
+  /api/messages:
+    get:
+      summary: 列出消息（占位）
+      parameters:
+        - in: query
+          name: conversationId
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    post:
+      summary: 语音合成（占位）
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+      responses:
+        '200':
+          description: 返回音频 URL（占位）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  audioUrl:
+                    type: string
 components:
   schemas:
     Role:
@@ -92,3 +174,10 @@ components:
         audioUrl:
           type: string
           nullable: true
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
