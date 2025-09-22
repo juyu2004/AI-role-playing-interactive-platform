@@ -1,0 +1,94 @@
+openapi: 3.0.3
+info:
+  title: AI 角色扮演互动平台 API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /api/roles:
+    get:
+      summary: 列出可用角色
+      responses:
+        '200':
+          description: 角色列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+  /api/roles/{id}:
+    get:
+      summary: 获取角色详情
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 角色信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '404':
+          description: 未找到
+  /api/chat:
+    post:
+      summary: 发送文本消息并获取角色回复
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: 聊天回复
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+components:
+  schemas:
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        avatarUrl:
+          type: string
+        description:
+          type: string
+    ChatRequest:
+      type: object
+      required: [roleId, text]
+      properties:
+        roleId:
+          type: string
+        text:
+          type: string
+    ChatResponse:
+      type: object
+      properties:
+        text:
+          type: string
+        audioUrl:
+          type: string
+          nullable: true
