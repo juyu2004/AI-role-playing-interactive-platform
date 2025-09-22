@@ -40,4 +40,7 @@ docker-compose up --build
 
 许可证
 MIT
+
+# 数据库设置：$env:DATABASE_URL = "postgres://postgres:123456@localhost:5432/mydb?sslmode=disable"
+
 ✨ 本项目旨在利用先进的AI大模型技术，打造一个平台，让用户能够与他们喜爱的虚拟角色（如小说人物、历史人物、影视角色等）进行实时、自然的语音对话，获得独特的互动体验。✨
