@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"time"
 
+	"ai-role-playing-platform/backend-go/internal/app"
 	"ai-role-playing-platform/backend-go/internal/models"
+	rdb "ai-role-playing-platform/backend-go/internal/repo/db"
 	"ai-role-playing-platform/backend-go/internal/services"
 )
 
@@ -15,22 +17,34 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	var req models.ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
 		return
 	}
 
 	role := getRoleByID(req.RoleID)
 	if role == nil {
 		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": "role not found"})
 		return
 	}
 	router := services.ProviderRouter{}
 	provider := router.ResolveProvider(role.ID)
 	reply, _ := provider.Generate(role.Prompt, req.Text)
 	resp := models.ChatResponse{Text: reply, AudioURL: nil}
-	w.Header().Set("Content-Type", "application/json")
+	// Persist if authenticated and DB configured (reuse global app.DB)
+	if app.DB != nil {
+		if user, _ := r.Context().Value("user").(string); user != "" {
+			convRepo := rdb.NewConversationRepo(app.DB)
+			msgRepo := rdb.NewMessageRepo(app.DB)
+			conv, _ := convRepo.Create(user, req.RoleID)
+			_, _ = msgRepo.Create(conv.ID, "user", req.Text)
+			_, _ = msgRepo.Create(conv.ID, "role", reply)
+		}
+	}
 	_ = json.NewEncoder(w).Encode(resp)
 }
 

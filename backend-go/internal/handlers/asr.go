@@ -17,6 +17,7 @@ func HandleASR(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	// In the future: parse audio from multipart/form-data or raw bytes
 	text, _ := services.TranscribeAudio(nil)
 	_ = json.NewEncoder(w).Encode(asrResponse{Text: text})

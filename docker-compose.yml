@@ -7,6 +7,9 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
+      - JWT_SECRET=${JWT_SECRET:-change-me}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+      - DATABASE_URL=${DATABASE_URL:-postgres://postgres:123456@::1:5432/mydb?sslmode=disable}
     volumes:
       - ./backend-go:/app
     depends_on: []

@@ -33,8 +33,10 @@ type Message struct {
 
 type ConversationRepository interface {
 	ListByUser(userID string, limit, offset int) ([]Conversation, error)
+	Create(userID, roleID string) (Conversation, error)
 }
 
 type MessageRepository interface {
 	ListByConversation(convID string, limit, offset int) ([]Message, error)
+	Create(convID, sender, text string) (Message, error)
 }

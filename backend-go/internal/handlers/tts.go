@@ -21,6 +21,7 @@ func HandleTTS(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
 	var req ttsRequest
 	_ = json.NewDecoder(r.Body).Decode(&req)
 	url, _ := services.SynthesizeSpeech(req.Text)
