@@ -149,6 +149,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+// import ApiService from '@/services/api'
 
 const router = useRouter()
 
@@ -180,7 +181,7 @@ const validateUsername = () => {
   usernameError.value = ''
   return true
 }
-
+//邮箱格式验证
 const validateEmail = () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!email.value.trim()) {
@@ -194,7 +195,7 @@ const validateEmail = () => {
   emailError.value = ''
   return true
 }
-
+//密码格式验证
 const validatePassword = () => {
   const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/
   if (!password.value) {
@@ -213,6 +214,7 @@ const validatePassword = () => {
   return true
 }
 
+// 确认密码验证
 const validateConfirmPassword = () => {
   if (!confirmPassword.value) {
     confirmPasswordError.value = '请确认密码'
@@ -246,10 +248,9 @@ const isFormValid = computed(() => {
   )
 })
 
-// 处理注册
+// 处理注册验证
 const handleRegister = async () => {
   if (!isFormValid.value) {
-    // 触发所有验证
     validateUsername()
     validateEmail()
     validatePassword()
@@ -257,8 +258,13 @@ const handleRegister = async () => {
     return
   }
 
+// 注册（占位）username email password comfirmPassword
   try {
     isLoading.value = true
+    // const response = await ApiService.register({
+    //   email: username.value,
+    //   password: password.value
+    // })
 
     // 模拟注册请求
     await new Promise(resolve => setTimeout(resolve, 2000))
@@ -271,7 +277,7 @@ const handleRegister = async () => {
     router.push({ name: 'roleSelect' })
   } catch (error) {
     console.error('注册失败:', error)
-    // 实际项目中这里应该显示错误提示
+    // 错误提示 (占位)
   } finally {
     isLoading.value = false
   }

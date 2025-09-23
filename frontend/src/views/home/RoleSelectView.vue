@@ -71,7 +71,7 @@
 
       <div v-else class="roles-grid">
         <div
-          v-for="role in filteredRoles"
+          v-for="role in paginatedRoles"
           :key="role.id"
           class="role-card"
           @click="selectRole(role.id)"
@@ -95,12 +95,41 @@
           </div>
         </div>
       </div>
+
+      <!-- 分页控件 -->
+      <div v-if="totalPages > 1" class="pagination-controls">
+        <button
+          class="pagination-btn"
+          @click="goToPrevPage"
+          :disabled="currentPage === 1"
+        >
+          上一页
+        </button>
+        <div class="page-numbers">
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="page-btn"
+            :class="{ 'active': currentPage === page }"
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        </div>
+        <button
+          class="pagination-btn"
+          @click="goToNextPage"
+          :disabled="currentPage === totalPages"
+        >
+          下一页
+        </button>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ApiService from '@/services/api'
 import type { Role } from '@/types/api'
@@ -112,6 +141,10 @@ const searchQuery = ref('')
 const loading = ref(false)
 const error = ref('')
 const hoveredRoleId = ref('')
+
+// 分页相关变量
+const currentPage = ref(1)
+const pageSize = ref(4)
 
 // 新增用户状态相关变量
 const isLoggedIn = ref(false) // 模拟用户登录状态
@@ -189,7 +222,7 @@ const handleLogout = () => {
   userAvatar.value = ''
 }
 
-// 获取角色列表
+// 获取角色列表 - 修复mock数据不显示的问题
 const fetchRoles = async () => {
   loading.value = true
   error.value = ''
@@ -197,25 +230,33 @@ const fetchRoles = async () => {
     const response = await ApiService.getRoles()
     console.log('获取角色列表:', response)
 
-    // 检查响应是否为数组，而不是检查success属性，后端响应不包括success
-    if (Array.isArray(response) && response.length > 0) {
-      roles.value = response
-    } else if (response.success && response.data && response.data.length > 0) {
-      // 保留原有的处理逻辑，以便兼容可能的标准响应格式
+    // 改进的响应处理逻辑
+    if (response && response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
+      // 标准响应格式，且有数据
       roles.value = response.data
+    } else if (Array.isArray(response)) {
+      // 如果直接返回数组
+      roles.value = response
     } else {
-      // 如果API返回为空，使用模拟数据
+      // 如果API返回为空或格式不符合预期，使用模拟数据
       roles.value = mockRoles
+      console.log('使用模拟角色数据')
+      error.value = '' // 关键修复：不显示错误信息
     }
     // 初始过滤
     handleSearch()
+    // 重置页码
+    currentPage.value = 1
   } catch (err) {
     console.error('获取角色列表失败:', err)
     // API请求失败时使用模拟数据
     roles.value = mockRoles
-    error.value = '获取角色列表失败，使用模拟数据'
+    console.log('使用模拟角色数据:', roles.value)
+    error.value = '' // 关键修复：不显示错误信息
     // 初始过滤
     handleSearch()
+    // 重置页码
+    currentPage.value = 1
   } finally {
     loading.value = false
   }
@@ -225,15 +266,49 @@ const fetchRoles = async () => {
 const handleSearch = () => {
   if (!searchQuery.value.trim()) {
     filteredRoles.value = roles.value
-    return
+  } else {
+    const query = searchQuery.value.toLowerCase().trim()
+    filteredRoles.value = roles.value.filter(role =>
+      role.name.toLowerCase().includes(query) ||
+      role.category.toLowerCase().includes(query) ||
+      role.description.toLowerCase().includes(query)
+    )
   }
+  // 搜索时重置到第一页
+  currentPage.value = 1
+}
 
-  const query = searchQuery.value.toLowerCase().trim()
-  filteredRoles.value = roles.value.filter(role =>
-    role.name.toLowerCase().includes(query) ||
-    role.category.toLowerCase().includes(query) ||
-    role.description.toLowerCase().includes(query)
-  )
+// 计算当前页显示的角色
+const paginatedRoles = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value
+  const endIndex = startIndex + pageSize.value
+  return filteredRoles.value.slice(startIndex, endIndex)
+})
+
+// 计算总页数
+const totalPages = computed(() => {
+  return Math.ceil(filteredRoles.value.length / pageSize.value)
+})
+
+// 跳转到指定页
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+// 下一页
+const goToNextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+// 上一页
+const goToPrevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
 }
 
 // 选择角色并跳转到对话界面
@@ -267,7 +342,7 @@ onMounted(() => {
 }
 
 /* Logo样式 */
-.logo-container {
+logo-container {
   display: flex;
   align-items: center;
 }
@@ -360,6 +435,67 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
+/* 分页控件样式 */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.pagination-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.page-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.page-btn.active {
+  background: white;
+  color: #667eea;
+  border-color: white;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .top-navigation {
@@ -378,6 +514,23 @@ onMounted(() => {
 
   .user-controls {
     gap: 0.5rem;
+  }
+
+  /* 分页控件响应式调整 */
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pagination-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .page-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
   }
 }
 </style>

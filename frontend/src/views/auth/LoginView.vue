@@ -150,11 +150,10 @@ const handleLogin = async () => {
       email: username.value,
       password: password.value
     })
-    console.log('登录响应:', response)
     // 这里假设response已经是正确的登录响应数据
-    if (response && response.token) {
+    if (response && response.data && response.data.token) {
       // 登录成功，存储token，设置一个默认头像（占位）
-      localStorage.setItem('token', response.token?.toString() || '')
+      localStorage.setItem('token', response.data?.token?.toString() || '')
       localStorage.setItem('userAvatar', 'https://picsum.photos/id/64/40/40')
       router.push({ name: 'roleSelect' })
     } else {
