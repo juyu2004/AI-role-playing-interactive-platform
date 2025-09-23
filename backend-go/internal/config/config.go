@@ -13,6 +13,9 @@ type Config struct {
 	OpenRouterAPIKey  string
 	OpenRouterModel   string
 	OpenRouterBaseURL string
+	BaiduAppID        string
+	BaiduAPIKey       string
+	BaiduSecretKey    string
 }
 
 func Load() Config {
@@ -28,6 +31,10 @@ func Load() Config {
 		OpenRouterAPIKey:  getenv("OPENROUTER_API_KEY", "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"),
 		OpenRouterModel:   getenv("OPENROUTER_MODEL", "nvidia/nemotron-nano-9b-v2:free"),
 		OpenRouterBaseURL: getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+		// 默认内置百度智能云语音服务凭据（可直接使用）。
+		BaiduAppID:     getenv("BAIDU_APP_ID", "7080797"),
+		BaiduAPIKey:    getenv("BAIDU_API_KEY", "By5O9RHtXiycynI7OUMrvgVI"),
+		BaiduSecretKey: getenv("BAIDU_SECRET_KEY", "UU9jUJgxR5XDe1iuuhwPbSFoZa8Zm70g"),
 	}
 	return cfg
 }
