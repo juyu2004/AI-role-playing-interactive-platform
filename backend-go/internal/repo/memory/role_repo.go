@@ -34,3 +34,12 @@ func (r *RoleRepo) GetByID(id string) (*models.Role, error) {
 	vv := v
 	return &vv, nil
 }
+
+func (r *RoleRepo) Create(role models.Role) (*models.Role, error) {
+    if _, exists := r.items[role.ID]; exists {
+        return nil, errors.New("exists")
+    }
+    r.items[role.ID] = role
+    rr := role
+    return &rr, nil
+}

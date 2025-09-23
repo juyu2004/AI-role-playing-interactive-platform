@@ -41,3 +41,14 @@ func (r *ConversationRepo) Create(userID, roleID string) (repo.Conversation, err
 	r.items = append(r.items, c)
 	return c, nil
 }
+
+func (r *ConversationRepo) ReassignUserData(fromUserID, toUserID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for i := range r.items {
+		if r.items[i].UserID == fromUserID {
+			r.items[i].UserID = toUserID
+		}
+	}
+	return nil
+}

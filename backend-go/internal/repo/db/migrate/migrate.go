@@ -1,6 +1,16 @@
--- PostgreSQL schema (updated)
+package migrate
 
+import (
+	"database/sql"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+)
+
+// schemaSQL is embedded copy of database schema for automatic initialization.
+const schemaSQL = `
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- PostgreSQL schema (initial draft)
 
 CREATE TABLE IF NOT EXISTS roles (
     id TEXT PRIMARY KEY,
@@ -36,7 +46,7 @@ CREATE TABLE IF NOT EXISTS messages (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Friends (store as two directed edges for undirected friendship)
+-- Friends (undirected as two directed edges)
 CREATE TABLE IF NOT EXISTS friends (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     friend_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -48,4 +58,15 @@ CREATE TABLE IF NOT EXISTS friends (
 CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages(conversation_id, created_at DESC);
 
+-- Seed default roles
+INSERT INTO roles(id, name, category, avatar_url, description, prompt, image_url) VALUES
+('sherlock','Sherlock Holmes','literature','', 'Brilliant detective with keen observation and deduction.', 'You are Sherlock Holmes. Respond concisely with sharp deductions.',''),
+('mulan','Hua Mulan','history','', 'Heroine known for courage and loyalty.', 'You are Hua Mulan. Speak with bravery and humility.','')
+ON CONFLICT (id) DO NOTHING;
+`
 
+// Apply runs the schema SQL to ensure required tables exist.
+func Apply(db *sql.DB) error {
+	_, err := db.Exec(schemaSQL)
+	return err
+}

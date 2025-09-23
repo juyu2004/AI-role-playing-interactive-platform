@@ -5,31 +5,12 @@ import (
 	"net/http"
 	"strings"
 
+	"ai-role-playing-platform/backend-go/internal/app"
 	"ai-role-playing-platform/backend-go/internal/models"
-	"ai-role-playing-platform/backend-go/internal/repo"
-	mem "ai-role-playing-platform/backend-go/internal/repo/memory"
+	rdb "ai-role-playing-platform/backend-go/internal/repo/db"
 )
 
-var inMemoryRoles = []models.Role{
-	{
-		ID:          "sherlock",
-		Name:        "Sherlock Holmes",
-		Category:    "literature",
-		AvatarURL:   "",
-		Description: "Brilliant detective with keen observation and deduction.",
-		Prompt:      "You are Sherlock Holmes. Respond concisely with sharp deductions.",
-	},
-	{
-		ID:          "mulan",
-		Name:        "Hua Mulan",
-		Category:    "history",
-		AvatarURL:   "",
-		Description: "Heroine known for courage and loyalty.",
-		Prompt:      "You are Hua Mulan. Speak with bravery and humility.",
-	},
-}
-
-var roleRepository repo.RoleRepository = mem.NewRoleRepo(inMemoryRoles)
+// Roles are stored in PostgreSQL; seeded by migrations.
 
 func HandleRoles(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -37,7 +18,8 @@ func HandleRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	roles, _ := roleRepository.List()
+	repo := rdb.NewRoleRepo(app.DB)
+	roles, _ := repo.List()
 	_ = json.NewEncoder(w).Encode(roles)
 }
 
@@ -53,11 +35,52 @@ func HandleRoleDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := parts[0]
-	role, err := roleRepository.GetByID(id)
+	repo := rdb.NewRoleRepo(app.DB)
+	role, err := repo.GetByID(id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(role)
+}
+
+// POST /api/roles
+func HandleCreateRole(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if app.DB == nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+	var req struct {
+		ID          string  `json:"id"`
+		Name        string  `json:"name"`
+		Category    string  `json:"category"`
+		AvatarURL   *string `json:"avatarUrl"`
+		Description string  `json:"description"`
+		Prompt      string  `json:"prompt"`
+		ImageURL    *string `json:"imageUrl"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	// Use repository create
+	repo := rdb.NewRoleRepo(app.DB)
+	created, err := repo.Create(models.Role{ID: req.ID, Name: req.Name, Category: req.Category, AvatarURL: derefOrEmpty(req.AvatarURL), Description: req.Description, Prompt: req.Prompt})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(created)
+}
+
+func derefOrEmpty(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }

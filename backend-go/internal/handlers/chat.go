@@ -25,7 +25,11 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role := getRoleByID(req.RoleID)
+	// Load role strictly from DB for persistence
+	var role *models.Role
+	if r, err := rdb.NewRoleRepo(app.DB).GetByID(req.RoleID); err == nil {
+		role = r
+	}
 	if role == nil {
 		w.WriteHeader(http.StatusNotFound)
 		_ = json.NewEncoder(w).Encode(map[string]string{"error": "role not found"})
@@ -46,16 +50,6 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	_ = json.NewEncoder(w).Encode(resp)
-}
-
-func getRoleByID(id string) *models.Role {
-	for _, role := range inMemoryRoles {
-		if role.ID == id {
-			r := role
-			return &r
-		}
-	}
-	return nil
 }
 
 // SSE placeholder: emits 3 chunks then closes.

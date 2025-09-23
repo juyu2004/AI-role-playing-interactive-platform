@@ -17,13 +17,16 @@ type Config struct {
 
 func Load() Config {
 	cfg := Config{
-		Port:              getenv("PORT", "8080"),
-		JWTSecret:         getenv("JWT_SECRET", "dev-secret"),
-		AllowedOrigins:    getenv("ALLOWED_ORIGINS", "*"),
-		DatabaseURL:       getenv("DATABASE_URL", ""),
+		Port:           getenv("PORT", "8080"),
+		JWTSecret:      getenv("JWT_SECRET", "dev-secret"),
+		AllowedOrigins: getenv("ALLOWED_ORIGINS", "*"),
+		// 默认本地 PostgreSQL 连接串。建议通过环境变量 DATABASE_URL 覆盖。
+		// 示例：postgres://用户名:密码@主机:端口/数据库名?sslmode=disable
+		// 本地示例：postgres://postgres:123456@localhost:5432/mydb?sslmode=disable
+		DatabaseURL:       getenv("DATABASE_URL", "postgres://postgres:123456@localhost:5432/mydb?sslmode=disable"),
 		PageSizeDefault:   20,
 		OpenRouterAPIKey:  getenv("OPENROUTER_API_KEY", "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"),
-		OpenRouterModel:   getenv("OPENROUTER_MODEL", "deepseek/deepseek-chat-v3.1:free"),
+		OpenRouterModel:   getenv("OPENROUTER_MODEL", "nvidia/nemotron-nano-9b-v2:free"),
 		OpenRouterBaseURL: getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
 	}
 	return cfg
