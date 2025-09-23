@@ -248,6 +248,7 @@ const audioElements = ref<Record<string, HTMLAudioElement>>({})
 const audioProgress = ref<Record<string, number>>({})
 const audioDurations = ref<Record<string, number>>({})
 const currentlyPlayingAudio = ref<string | null>(null)
+
 // 添加录音时长状态
 const recordingDuration = ref('00:00')
 const recordingStartTime = ref<number | null>(null)

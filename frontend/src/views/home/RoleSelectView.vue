@@ -1,6 +1,6 @@
 <template>
   <div class="role-select-container">
-    <!-- 新的头部导航 -->
+    <!-- 头部导航：登陆+注册+logo -->
     <div class="top-navigation">
       <!-- 左侧Logo -->
       <div class="logo-container">
@@ -36,7 +36,7 @@
       </div>
     </div>
 
-    <!-- 原有的页面内容 -->
+    <!-- body部分 -->
     <header class="header">
       <h1 class="title">Choose your Role to Talk</h1>
       <div class="search-container">
@@ -53,7 +53,7 @@
       </div>
     </header>
 
-    <!-- 角色卡片部分保持不变 -->
+    <!-- 角色卡片+模糊搜索 -->
     <main class="roles-content">
       <div v-if="loading" class="loading-container">
         <div class="loading-spinner"></div>
@@ -197,7 +197,7 @@ const fetchRoles = async () => {
     const response = await ApiService.getRoles()
     console.log('获取角色列表:', response)
 
-    // 检查响应是否为数组，而不是检查success属性
+    // 检查响应是否为数组，而不是检查success属性，后端响应不包括success
     if (Array.isArray(response) && response.length > 0) {
       roles.value = response
     } else if (response.success && response.data && response.data.length > 0) {

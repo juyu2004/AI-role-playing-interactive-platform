@@ -77,6 +77,9 @@
           </div>
         </div>
 
+        <!-- 错误提示 -->
+        <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+
         <!-- 登录按钮 -->
         <button type="submit" class="login-button" :disabled="isLoading">
           <span v-if="!isLoading">登录</span>
@@ -118,6 +121,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import ApiService from '@/services/api'
 
 const router = useRouter()
 
@@ -126,24 +130,40 @@ const username = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const isLoading = ref(false)
+const errorMessage = ref('')
 
 // 处理登录
 const handleLogin = async () => {
   try {
+    // 重置错误信息
+    errorMessage.value = ''
     isLoading.value = true
 
-    // 模拟登录请求
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // 表单验证
+    if (!username.value || !password.value) {
+      errorMessage.value = '请填写完整的登录信息'
+      return
+    }
 
-    // 登录成功后，存储用户信息并跳转
-    localStorage.setItem('userToken', 'mock-token')
-    localStorage.setItem('userAvatar', 'https://picsum.photos/id/64/40/40')
-
-    // 跳转到角色选择页面
-    router.push({ name: 'roleSelect' })
+    // 使用API服务进行登录请求
+    const response = await ApiService.login({
+      email: username.value,
+      password: password.value
+    })
+    console.log('登录响应:', response)
+    // 这里假设response已经是正确的登录响应数据
+    if (response && response.token) {
+      // 登录成功，存储token，设置一个默认头像（占位）
+      localStorage.setItem('token', response.token?.toString() || '')
+      localStorage.setItem('userAvatar', 'https://picsum.photos/id/64/40/40')
+      router.push({ name: 'roleSelect' })
+    } else {
+      throw new Error('登录失败，无效的响应数据')
+    }
   } catch (error) {
     console.error('登录失败:', error)
-    // 实际项目中这里应该显示错误提示
+    // 显示错误提示
+    errorMessage.value = error instanceof Error ? error.message : '登录失败，请重试'
   } finally {
     isLoading.value = false
   }
@@ -321,6 +341,17 @@ const goToRegister = () => {
 
 .form-input::placeholder {
   color: #a0aec0;
+}
+
+/* 错误消息样式 */
+.error-message {
+  color: #e53e3e;
+  font-size: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 6px;
 }
 
 /* 切换密码可见性按钮 */

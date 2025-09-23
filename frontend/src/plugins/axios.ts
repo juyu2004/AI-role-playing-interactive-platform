@@ -17,7 +17,7 @@ export default {
     // 挂载 API 服务
     app.config.globalProperties.$api = ApiService
 
-    // 提供注入方式（推荐）
+    // 提供注入方式
     app.provide('$http', request)
     app.provide('$api', ApiService)
   }
