@@ -561,7 +561,7 @@ const formatLastMessageTime = (timestamp: string): string => {
 // 发送消息
 const sendMessage = async () => {
   const message = inputMessage.value.trim()
-  console.log('发送消息:', message)
+  // console.log('发送消息:', message)
   if (!message || isTyping.value) return
 
   // 添加用户消息到列表
@@ -589,10 +589,8 @@ const sendMessage = async () => {
       roleId,
       text: message
     }
-
     // 调用API发送消息
     const response = await ApiService.sendChat(chatRequest)
-    console.log('发送消息响应:', response)
 
     // 处理API响应，根据实际返回格式提取文本内容
     let replyText = '抱歉，我暂时无法回答这个问题。'
@@ -715,10 +713,8 @@ const uploadAndSendAudio = async (audioBlob: Blob) => {
     // 创建FormData对象
     const formData = new FormData()
     formData.append('audio', audioBlob, `recording-${Date.now()}.wav`)
-
     // 显示正在输入状态
     isTyping.value = true
-
     // 上传音频
     const uploadResponse = await ApiService.uploadAudio(formData)
     let audioUrl: string | null = null

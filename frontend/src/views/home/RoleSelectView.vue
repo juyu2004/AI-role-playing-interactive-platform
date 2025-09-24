@@ -28,7 +28,9 @@
             <img
               :src="userAvatar || 'https://picsum.photos/id/64/40/40'"
               :alt="'用户头像'"
+              @click="goToProfile"
               class="user-avatar"
+              style="cursor: pointer;"
             />
             <button class="logout-btn" @click="handleLogout">退出登录</button>
           </div>
@@ -78,7 +80,7 @@
           @mouseenter="hoveredRoleId = role.id"
           @mouseleave="hoveredRoleId = ''"
         >
-          <div class="avatar-container">
+          <!-- <div class="avatar-container">
             <img
               :src="role.avatarUrl || 'https://picsum.photos/id/' + (parseInt(role.id) % 50) + '/200/200'"
               :alt="role.name"
@@ -87,7 +89,18 @@
             <div class="avatar-overlay" :class="{ 'active': hoveredRoleId === role.id }">
               <div class="view-details">开始对话</div>
             </div>
-          </div>
+          </div> -->
+         <div class="avatar-container">
+        <img
+          :src="role.avatarUrl || 'https://picsum.photos/id/' + (parseInt(role.id) % 50) + '/200/200'"
+          :alt="role.name"
+          class="role-avatar"
+        />
+        <div class="avatar-overlay" :class="{ 'active': hoveredRoleId === role.id }">
+          <button class="view-details-btn" @click.stop="viewRoleDetails(role.id)">查看详情</button>
+          <button class="start-chat-btn" @click.stop="selectRole(role.id)">开始对话</button>
+        </div>
+      </div>
           <div class="role-info">
             <h3 class="role-name">{{ role.name }}</h3>
             <p class="role-category">{{ role.category }}</p>
@@ -197,14 +210,21 @@ const mockRoles: Role[] = [
 ]
 
 // 新增登录处理函数
-const handleLogin = () => {
-  // 实际项目中这里应该跳转到登录页面
-  console.log('登录按钮点击')
-  // 模拟登录成功
-  router.push({ name: 'login' })
-  isLoggedIn.value = true
-  userAvatar.value = 'https://picsum.photos/id/64/40/40'
-  // 跳转到角色选择页面
+// const handleLogin = () => {
+//   // 实际项目中这里应该跳转到登录页面
+//   console.log('登录按钮点击')
+//   // 模拟登录成功
+//   router.push({ name: 'login' })
+//   isLoggedIn.value = true
+//   userAvatar.value = 'https://picsum.photos/id/64/40/40'
+//   // 跳转到角色选择页面
+// }
+const viewRoleDetails = (roleId: string) => {
+  router.push({ name: 'roleProfile', params: { roleId } })
+}
+
+const goToProfile = () => {
+  router.push({ name: 'profile' })
 }
 
 // 新增注册处理函数
@@ -212,14 +232,6 @@ const handleRegister = () => {
   console.log('注册按钮点击')
   // 模拟跳转到注册页面
   router.push({ name: 'register' })
-}
-
-// 新增退出登录处理函数
-const handleLogout = () => {
-  // 实际项目中这里应该清除用户登录状态
-  console.log('退出登录按钮点击')
-  isLoggedIn.value = false
-  userAvatar.value = ''
 }
 
 // 获取角色列表 - 修复mock数据不显示的问题
@@ -313,21 +325,106 @@ const goToPrevPage = () => {
 
 // 选择角色并跳转到对话界面
 const selectRole = (roleId: string) => {
+  // 检查是否存在token
+  const token = localStorage.getItem('token')
+  if (!token) {
+    // 如果没有token，跳转到登录页面
+    alert('请先登录后再开始对话')
+    router.push({ name: 'login' })
+    return
+  }
+  // 有token时正常跳转到对话界面
   router.push({ name: 'chat', params: { roleId } })
 }
 
-// 组件挂载时获取角色列表
+// 组件挂载时获取角色列表和检查登录状态
 onMounted(() => {
   fetchRoles()
-  // 模拟检查用户登录状态
-  // 在实际项目中，这里应该从localStorage或API检查用户登录状态
-  // isLoggedIn.value = localStorage.getItem('userToken') !== null
+  // 检查用户登录状态
+  const token = localStorage.getItem('token')
+  const avatar = localStorage.getItem('userAvatar')
+  isLoggedIn.value = !!token // 当token存在时设置为已登录
+  userAvatar.value = avatar || ''
 })
+
+// 修复登录处理函数
+const handleLogin = () => {
+  // 跳转到登录页面
+  router.push({ name: 'login' })
+}
+
+// 修复退出登录处理函数
+const handleLogout = () => {
+  // 清除用户登录状态和token
+  localStorage.removeItem('token')
+  localStorage.removeItem('userAvatar')
+  isLoggedIn.value = false
+  userAvatar.value = ''
+  // 可选：跳转到登录页面
+  // router.push({ name: 'login' })
+}
 </script>
 
 <style scoped src="../home/index.css"></style>
 
 <style scoped>
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  gap: 0.8rem;
+  border-radius: 50%;
+}
+
+.avatar-overlay.active {
+  opacity: 1;
+}
+
+/* 按钮样式 */
+.view-details-btn,
+.start-chat-btn {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.view-details-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.view-details-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.start-chat-btn {
+  background: white;
+  color: #667eea;
+}
+
+.start-chat-btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+}
+
+
+
 /* 新增的导航栏样式 */
 .top-navigation {
   display: flex;

@@ -132,7 +132,6 @@ const showPassword = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
 
-// 处理登录
 const handleLogin = async () => {
   try {
     // 重置错误信息
@@ -144,16 +143,29 @@ const handleLogin = async () => {
       errorMessage.value = '请填写完整的登录信息'
       return
     }
-
     // 使用API服务进行登录请求
     const response = await ApiService.login({
       email: username.value,
       password: password.value
     })
-    // 这里假设response已经是正确的登录响应数据
-    if (response && response.data && response.data.token) {
-      // 登录成功，存储token，设置一个默认头像（占位）
-      localStorage.setItem('token', response.data?.token?.toString() || '')
+    console.log('登录响应:', response)
+
+    // 使用类型守卫安全地获取token
+    let token: string | undefined;
+
+    // 检查是否是标准格式响应
+    if ('data' in response && response.data && 'token' in response.data) {
+      token = response.data.token;
+    }
+    // 检查是否是简化格式响应
+    else if ('token' in response) {
+      console.log("1111")
+      token = response.token;
+    }
+
+    if (token) {
+      // 登录成功，存储token
+      localStorage.setItem('token', token.toString())
       localStorage.setItem('userAvatar', 'https://picsum.photos/id/64/40/40')
       router.push({ name: 'roleSelect' })
     } else {
