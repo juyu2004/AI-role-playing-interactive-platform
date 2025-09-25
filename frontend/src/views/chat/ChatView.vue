@@ -561,7 +561,7 @@ const formatLastMessageTime = (timestamp: string): string => {
 // 发送消息
 const sendMessage = async () => {
   const message = inputMessage.value.trim()
-  // console.log('发送消息:', message)
+  console.log('发送消息:', message)
   if (!message || isTyping.value) return
 
   // 添加用户消息到列表
@@ -591,6 +591,7 @@ const sendMessage = async () => {
     }
     // 调用API发送消息
     const response = await ApiService.sendChat(chatRequest)
+    console.log('API响应:', response)
 
     // 处理API响应，根据实际返回格式提取文本内容
     let replyText = '抱歉，我暂时无法回答这个问题。'
