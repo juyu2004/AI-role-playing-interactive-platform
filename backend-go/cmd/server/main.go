@@ -40,6 +40,7 @@ func main() {
 		_, _ = w.Write([]byte(`{"status":"ok","deps":{"db":"` + dbStatus + `"}}`))
 	})
 	mux.HandleFunc("/api/auth/login", handlers.HandleLogin)
+	mux.HandleFunc("/api/auth/register", handlers.HandleRegister)
 	// Protected routes
 	mux.Handle("/api/conversations", middleware.JWT(http.HandlerFunc(handlers.HandleListConversations)))
 	mux.Handle("/api/conversations/reassign", middleware.JWT(http.HandlerFunc(handlers.HandleReassignUserData)))
@@ -58,6 +59,7 @@ func main() {
 	mux.Handle("/api/chat/stream", middleware.JWT(http.HandlerFunc(handlers.HandleChatStream)))
 	mux.HandleFunc("/api/asr", handlers.HandleASR)
 	mux.HandleFunc("/api/tts", handlers.HandleTTS)
+	mux.HandleFunc("/api/upload/audio", handlers.HandleUploadAudio)
 
 	handler := withCORS(cfg.AllowedOrigins, middleware.RateLimit(100)(middleware.Logging(mux)))
 	log.Printf("Go backend listening on :%s", cfg.Port)

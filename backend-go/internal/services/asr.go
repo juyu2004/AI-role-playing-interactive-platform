@@ -56,23 +56,28 @@ func getBaiduAccessToken() (string, error) {
 	return cachedBaiduToken, nil
 }
 
-// TranscribeAudio sends audio to Baidu VOP and returns text.
+// TranscribeAudio sends PCM(16k) audio to Baidu VOP and returns text.
 func TranscribeAudio(b []byte) (string, error) {
+	return TranscribeAudioWith(b, "pcm", 16000)
+}
+
+// TranscribeAudioWith allows specifying format and sample rate explicitly.
+func TranscribeAudioWith(b []byte, format string, rate int) (string, error) {
 	if len(bytes.TrimSpace(b)) == 0 {
 		return "", nil
 	}
-	// Prefer local SDK CLI if available: tools/aip-cpp-sdk-4.16.7/bin/asr_cli[.exe]
+	// Prefer local SDK CLI if available
 	if text, ok := tryLocalSDK(b); ok {
 		return text, nil
 	}
-	// Prefer Baidu JSON base64 with token in URL per official doc.
-	if text, err := baiduASRJSON(b, "pcm", 16000); err == nil && text != "" {
+	// Prefer Baidu JSON base64
+	if text, err := baiduASRJSON(b, format, rate); err == nil && text != "" {
 		return text, nil
 	} else if err != nil {
 		return "", err
 	}
-	// 兜底：multipart 方式再试一次（部分格式可能可用）
-	if text, err := baiduASRMultipart(b, "pcm", 16000); err == nil && text != "" {
+	// Fallback: multipart
+	if text, err := baiduASRMultipart(b, format, rate); err == nil && text != "" {
 		return text, nil
 	} else if err != nil {
 		return "", err

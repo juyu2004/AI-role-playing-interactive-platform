@@ -17,10 +17,10 @@ func HandleGetMe(w http.ResponseWriter, r *http.Request) {
 	userID, _ := r.Context().Value("user").(string)
 	u, err := rdb.NewUserRepo(app.DB).GetByID(userID)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		notFound(w, "user not found")
 		return
 	}
-	_ = json.NewEncoder(w).Encode(map[string]any{
+	ok(w, map[string]any{
 		"id":        u.ID,
 		"email":     u.Email,
 		"avatarUrl": u.AvatarURL,
@@ -39,14 +39,14 @@ func HandleUpdateAvatar(w http.ResponseWriter, r *http.Request) {
 		AvatarURL *string `json:"avatarUrl"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		badRequest(w, "invalid json")
 		return
 	}
 	if err := rdb.NewUserRepo(app.DB).UpdateAvatar(userID, req.AvatarURL); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		serverError(w, "failed to update avatar")
 		return
 	}
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	ok(w, map[string]string{"status": "ok"})
 }
 
 // POST /api/user/bio {"bio":"..."}
@@ -60,12 +60,12 @@ func HandleUpdateBio(w http.ResponseWriter, r *http.Request) {
 		Bio *string `json:"bio"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		badRequest(w, "invalid json")
 		return
 	}
 	if err := rdb.NewUserRepo(app.DB).UpdateBio(userID, req.Bio); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		serverError(w, "failed to update bio")
 		return
 	}
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	ok(w, map[string]string{"status": "ok"})
 }

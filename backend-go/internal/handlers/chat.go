@@ -17,11 +17,9 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	var req models.ChatRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
+		badRequest(w, "invalid json")
 		return
 	}
 
@@ -31,8 +29,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		role = r
 	}
 	if role == nil {
-		w.WriteHeader(http.StatusNotFound)
-		_ = json.NewEncoder(w).Encode(map[string]string{"error": "role not found"})
+		notFound(w, "role not found")
 		return
 	}
 	router := services.ProviderRouter{}
@@ -49,7 +46,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 			_, _ = msgRepo.Create(conv.ID, "role", reply)
 		}
 	}
-	_ = json.NewEncoder(w).Encode(resp)
+	ok(w, resp)
 }
 
 // SSE placeholder: emits 3 chunks then closes.

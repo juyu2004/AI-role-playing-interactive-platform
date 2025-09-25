@@ -29,7 +29,7 @@ func HandleListFriends(w http.ResponseWriter, r *http.Request) {
 		_ = rows.Scan(&id)
 		ids = append(ids, id)
 	}
-	_ = json.NewEncoder(w).Encode(map[string]any{"friends": ids})
+	ok(w, map[string]any{"friends": ids})
 }
 
 // POST /api/user/friends {"friendUserId":"..."}
@@ -43,19 +43,19 @@ func HandleAddFriend(w http.ResponseWriter, r *http.Request) {
 		FriendUserID string `json:"friendUserId"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.FriendUserID == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		badRequest(w, "invalid json")
 		return
 	}
 	// insert both directions for undirected
 	if _, err := app.DB.Exec(`INSERT INTO friends(user_id, friend_user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, userID, req.FriendUserID); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		serverError(w, "db error")
 		return
 	}
 	if _, err := app.DB.Exec(`INSERT INTO friends(user_id, friend_user_id) VALUES($1,$2) ON CONFLICT DO NOTHING`, req.FriendUserID, userID); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		serverError(w, "db error")
 		return
 	}
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	ok(w, map[string]string{"status": "ok"})
 }
 
 // DELETE /api/user/friends/{friendUserId}
@@ -71,5 +71,5 @@ func HandleRemoveFriend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, _ = app.DB.Exec(`DELETE FROM friends WHERE (user_id=$1 AND friend_user_id=$2) OR (user_id=$2 AND friend_user_id=$1)`, userID, friendID)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	ok(w, map[string]string{"status": "ok"})
 }

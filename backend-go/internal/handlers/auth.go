@@ -29,7 +29,10 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req loginRequest
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		badRequest(w, "invalid json")
+		return
+	}
 	// Login-or-register using PostgreSQL user repo
 	userRepo := rdb.NewUserRepo(app.DB)
 	u, err := userRepo.GetByEmail(req.Email)
@@ -39,13 +42,51 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		u, _ = userRepo.GetByEmail(req.Email)
 	} else {
 		if !mem.CheckPassword(u.PasswordHash, req.Password) {
-			w.WriteHeader(http.StatusUnauthorized)
-			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid credentials"})
+			unauthorized(w, "invalid credentials")
 			return
 		}
 	}
 	cfg := config.Load()
 	// Use user ID as subject
 	token, _ := security.SignHS256(cfg.JWTSecret, security.Claims{Sub: u.ID, Exp: time.Now().Add(24 * time.Hour).Unix()})
-	_ = json.NewEncoder(w).Encode(loginResponse{Token: token})
+	ok(w, loginResponse{Token: token})
+}
+
+// POST /api/auth/register
+func HandleRegister(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	var req loginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		badRequest(w, "invalid json")
+		return
+	}
+	if req.Email == "" || req.Password == "" {
+		badRequest(w, "email and password are required")
+		return
+	}
+	userRepo := rdb.NewUserRepo(app.DB)
+	if _, err := userRepo.GetByEmail(req.Email); err == nil {
+		badRequest(w, "email already registered")
+		return
+	}
+	hash, err := mem.HashPassword(req.Password)
+	if err != nil {
+		serverError(w, "failed to hash password")
+		return
+	}
+	if err := userRepo.Create(&repo.User{Email: req.Email, PasswordHash: hash}); err != nil {
+		serverError(w, "failed to create user")
+		return
+	}
+	u, err := userRepo.GetByEmail(req.Email)
+	if err != nil {
+		serverError(w, "failed to load user")
+		return
+	}
+	cfg := config.Load()
+	token, _ := security.SignHS256(cfg.JWTSecret, security.Claims{Sub: u.ID, Exp: time.Now().Add(24 * time.Hour).Unix()})
+	created(w, loginResponse{Token: token})
 }

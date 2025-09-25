@@ -17,10 +17,13 @@ func HandleRoles(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	repo := rdb.NewRoleRepo(app.DB)
-	roles, _ := repo.List()
-	_ = json.NewEncoder(w).Encode(roles)
+	roles, err := repo.List()
+	if err != nil {
+		serverError(w, "failed to list roles")
+		return
+	}
+	ok(w, roles)
 }
 
 func HandleRoleDetail(w http.ResponseWriter, r *http.Request) {
@@ -38,11 +41,10 @@ func HandleRoleDetail(w http.ResponseWriter, r *http.Request) {
 	repo := rdb.NewRoleRepo(app.DB)
 	role, err := repo.GetByID(id)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		notFound(w, "role not found")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(role)
+	ok(w, role)
 }
 
 // POST /api/roles
@@ -52,7 +54,7 @@ func HandleCreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if app.DB == nil {
-		w.WriteHeader(http.StatusServiceUnavailable)
+		serverError(w, "db not available")
 		return
 	}
 	var req struct {
@@ -65,17 +67,17 @@ func HandleCreateRole(w http.ResponseWriter, r *http.Request) {
 		ImageURL    *string `json:"imageUrl"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		badRequest(w, "invalid json")
 		return
 	}
 	// Use repository create
 	repo := rdb.NewRoleRepo(app.DB)
-	created, err := repo.Create(models.Role{ID: req.ID, Name: req.Name, Category: req.Category, AvatarURL: derefOrEmpty(req.AvatarURL), Description: req.Description, Prompt: req.Prompt})
+	createdRole, err := repo.Create(models.Role{ID: req.ID, Name: req.Name, Category: req.Category, AvatarURL: derefOrEmpty(req.AvatarURL), Description: req.Description, Prompt: req.Prompt})
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		serverError(w, "failed to create role")
 		return
 	}
-	_ = json.NewEncoder(w).Encode(created)
+	created(w, createdRole)
 }
 
 func derefOrEmpty(s *string) string {
