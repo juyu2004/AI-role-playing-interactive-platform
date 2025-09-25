@@ -36,10 +36,20 @@ func (r *RoleRepo) GetByID(id string) (*models.Role, error) {
 }
 
 func (r *RoleRepo) Create(role models.Role) (*models.Role, error) {
-    if _, exists := r.items[role.ID]; exists {
-        return nil, errors.New("exists")
-    }
-    r.items[role.ID] = role
-    rr := role
-    return &rr, nil
+	if _, exists := r.items[role.ID]; exists {
+		return nil, errors.New("exists")
+	}
+	r.items[role.ID] = role
+	rr := role
+	return &rr, nil
+}
+
+func (r *RoleRepo) UpdatePrompt(id string, prompt string) error {
+	v, ok := r.items[id]
+	if !ok {
+		return errors.New("not found")
+	}
+	v.Prompt = prompt
+	r.items[id] = v
+	return nil
 }

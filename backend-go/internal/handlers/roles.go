@@ -86,3 +86,29 @@ func derefOrEmpty(s *string) string {
 	}
 	return *s
 }
+
+// POST /api/roles/{id}/prompt  {"prompt":"..."}
+func HandleUpdateRolePrompt(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/roles/"), "/")
+	if len(parts) < 2 || parts[0] == "" || parts[1] != "prompt" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	id := parts[0]
+	var req struct {
+		Prompt string `json:"prompt"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Prompt == "" {
+		badRequest(w, "invalid json")
+		return
+	}
+	if err := rdb.NewRoleRepo(app.DB).UpdatePrompt(id, req.Prompt); err != nil {
+		serverError(w, "failed to update prompt")
+		return
+	}
+	ok(w, map[string]string{"status": "ok"})
+}

@@ -48,6 +48,7 @@ func main() {
 
 	mux.HandleFunc("/api/roles", handlers.HandleRoles)
 	mux.HandleFunc("/api/roles/", handlers.HandleRoleDetail)
+	mux.HandleFunc("/api/roles/prompt/", handlers.HandleUpdateRolePrompt)
 	mux.Handle("/api/user/me", middleware.JWT(http.HandlerFunc(handlers.HandleGetMe)))
 	mux.Handle("/api/user/avatar", middleware.JWT(http.HandlerFunc(handlers.HandleUpdateAvatar)))
 	mux.Handle("/api/user/bio", middleware.JWT(http.HandlerFunc(handlers.HandleUpdateBio)))

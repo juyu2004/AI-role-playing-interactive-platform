@@ -52,3 +52,9 @@ func (r *RoleRepo) Create(role models.Role) (*models.Role, error) {
 	}
 	return r.GetByID(role.ID)
 }
+
+func (r *RoleRepo) UpdatePrompt(id string, prompt string) error {
+	log.Printf("db: roles UpdatePrompt id=%s", id)
+	_, err := r.db.Exec(`UPDATE roles SET prompt=$1 WHERE id=$2`, prompt, id)
+	return err
+}

@@ -6,6 +6,7 @@ type RoleRepository interface {
 	List() ([]models.Role, error)
 	GetByID(id string) (*models.Role, error)
 	Create(role models.Role) (*models.Role, error)
+	UpdatePrompt(id string, prompt string) error
 }
 
 type User struct {
