@@ -8,6 +8,18 @@ export interface BaseResponse<T = unknown> {
   success: boolean
 }
 
+// 登录响应类型
+export interface LoginResponse {
+  token: string
+}
+
+// 可能的登录响应格式联合类型
+export type LoginApiResponse =
+  // 标准格式响应
+  BaseResponse<LoginResponse>
+  // 简化格式响应（直接包含token）
+  | LoginResponse;
+
 // 错误响应类型
 export interface ErrorResponse {
   code: number
@@ -46,11 +58,6 @@ export interface ChatResponse {
 export interface LoginRequest {
   email: string
   password: string
-}
-
-// 登录响应类型
-export interface LoginResponse {
-  token: string
 }
 
 // 语音识别响应类型

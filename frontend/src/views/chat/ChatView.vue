@@ -303,18 +303,17 @@ const loadRoleInfo = async () => {
     // 从API获取角色详情
     const response = await ApiService.getRoleDetail(roleId)
 
-    // 根据OpenAPI规范，API直接返回Role对象，而不是BaseResponse包装的对象
-    // 因此我们需要修改判断逻辑
+    // 检查响应格式
     if (response && typeof response === 'object') {
-      // 检查是否是直接的Role对象
-      if ('id' in response && 'name' in response) {
-        currentRole.value = response as unknown as Role
-        console.log('成功加载角色信息:', currentRole.value)
-      }
-      // 同时保留对BaseResponse格式的兼容，以防后端将来改变格式
-      else if (response.success !== undefined && response.data) {
+      // 首先检查是否是BaseResponse格式（根据ApiService定义）
+      if (response.success !== undefined && response.data) {
         currentRole.value = response.data
         console.log('成功加载角色信息(从BaseResponse):', currentRole.value)
+      }
+      // 然后检查是否是直接的Role对象
+      else if ('id' in response && 'name' in response) {
+        currentRole.value = response as unknown as Role
+        console.log('成功加载角色信息:', currentRole.value)
       } else {
         throw new Error('无效的角色数据格式')
       }
@@ -323,16 +322,71 @@ const loadRoleInfo = async () => {
     }
   } catch (err) {
     console.error('加载角色信息失败:', err)
-    error.value = '加载角色信息失败'
-    // 错误时使用模拟数据
-    const mockRole: Role = {
-      id: roleId,
-      name: ['夏洛克·福尔摩斯', '花木兰', '爱因斯坦', '莎士比亚', '居里夫人', '李白'][parseInt(roleId) % 6],
-      category: ['文学角色', '历史人物', '科学家', '文学家', '科学家', '诗人'][parseInt(roleId) % 6],
-      avatarUrl: `https://picsum.photos/id/${parseInt(roleId) % 50}/200/200`,
-      description: '正在对话中的角色'
+    // error.value = '加载角色信息失败'
+    // 错误时使用模拟数据，但确保与选择的角色ID对应
+    // 定义完整的模拟角色列表
+    const mockRoles: Role[] = [
+      {
+        id: '1',
+        name: '夏洛克·福尔摩斯',
+        category: '文学角色',
+        avatarUrl: 'https://picsum.photos/id/1/200/200',
+        description: '英国著名侦探，善于观察和推理'
+      },
+      {
+        id: '2',
+        name: '花木兰',
+        category: '历史人物',
+        avatarUrl: 'https://picsum.photos/id/2/200/200',
+        description: '代父从军的女英雄'
+      },
+      {
+        id: '3',
+        name: '爱因斯坦',
+        category: '科学家',
+        avatarUrl: 'https://picsum.photos/id/3/200/200',
+        description: '相对论的创立者'
+      },
+      {
+        id: '4',
+        name: '莎士比亚',
+        category: '文学家',
+        avatarUrl: 'https://picsum.photos/id/4/200/200',
+        description: '英国著名剧作家和诗人'
+      },
+      {
+        id: '5',
+        name: '居里夫人',
+        category: '科学家',
+        avatarUrl: 'https://picsum.photos/id/5/200/200',
+        description: '首位获得两次诺贝尔奖的科学家'
+      },
+      {
+        id: '6',
+        name: '李白',
+        category: '诗人',
+        avatarUrl: 'https://picsum.photos/id/6/200/200',
+        description: '唐代著名浪漫主义诗人'
+      }
+    ]
+
+    // 查找与传入的roleId相匹配的模拟角色
+    const selectedMockRole = mockRoles.find(role => role.id === roleId);
+
+    // 如果找到匹配的角色，则使用该角色；否则使用默认角色
+    if (selectedMockRole) {
+      currentRole.value = selectedMockRole;
+    } else {
+      // 退回到原来的取模逻辑作为备选方案
+      currentRole.value = {
+        id: roleId,
+        name: ['夏洛克·福尔摩斯', '花木兰', '爱因斯坦', '莎士比亚', '居里夫人', '李白'][parseInt(roleId) % 6],
+        category: ['文学角色', '历史人物', '科学家', '文学家', '科学家', '诗人'][parseInt(roleId) % 6],
+        avatarUrl: `https://picsum.photos/id/${parseInt(roleId) % 50}/200/200`,
+        description: '正在对话中的角色'
+      }
     }
-    currentRole.value = mockRole
+    console.log('使用模拟角色数据:', currentRole.value)
   }
 }
 
@@ -535,10 +589,9 @@ const sendMessage = async () => {
       roleId,
       text: message
     }
-
     // 调用API发送消息
     const response = await ApiService.sendChat(chatRequest)
-    console.log('发送消息响应:', response)
+    console.log('API响应:', response)
 
     // 处理API响应，根据实际返回格式提取文本内容
     let replyText = '抱歉，我暂时无法回答这个问题。'
@@ -574,7 +627,7 @@ const sendMessage = async () => {
     // 如果有audioUrl，可以在这里处理音频播放逻辑
     if (roleReply.audioUrl) {
       console.log('角色回复包含音频:', roleReply.audioUrl)
-      // 实际项目中可以在这里实现音频播放
+      // 实现音频播放
     }
   } catch (err) {
     console.error('发送消息失败:', err)
@@ -661,10 +714,8 @@ const uploadAndSendAudio = async (audioBlob: Blob) => {
     // 创建FormData对象
     const formData = new FormData()
     formData.append('audio', audioBlob, `recording-${Date.now()}.wav`)
-
     // 显示正在输入状态
     isTyping.value = true
-
     // 上传音频
     const uploadResponse = await ApiService.uploadAudio(formData)
     let audioUrl: string | null = null

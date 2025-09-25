@@ -9,7 +9,8 @@ import type {
   TTSRequest,
   TTSResponse,
   Conversation,
-  Message
+  Message,
+  LoginApiResponse
 } from '@/types/api'
 import request from '@/utils/request'
 
@@ -108,7 +109,7 @@ class ApiService {
    * 用户身份验证并获取访问令牌
    * @param params 登录请求参数，包含邮箱和密码
    */
-  public static async login(params: LoginRequest): Promise<BaseResponse<LoginResponse>> {
+  public static async login(params: LoginRequest): Promise<LoginApiResponse> {
     return request.post<LoginResponse>('/api/auth/login', params)
   }
 

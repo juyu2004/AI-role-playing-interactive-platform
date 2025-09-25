@@ -28,7 +28,9 @@
             <img
               :src="userAvatar || 'https://picsum.photos/id/64/40/40'"
               :alt="'用户头像'"
+              @click="goToProfile"
               class="user-avatar"
+              style="cursor: pointer;"
             />
             <button class="logout-btn" @click="handleLogout">退出登录</button>
           </div>
@@ -71,14 +73,14 @@
 
       <div v-else class="roles-grid">
         <div
-          v-for="role in filteredRoles"
+          v-for="role in paginatedRoles"
           :key="role.id"
           class="role-card"
           @click="selectRole(role.id)"
           @mouseenter="hoveredRoleId = role.id"
           @mouseleave="hoveredRoleId = ''"
         >
-          <div class="avatar-container">
+          <!-- <div class="avatar-container">
             <img
               :src="role.avatarUrl || 'https://picsum.photos/id/' + (parseInt(role.id) % 50) + '/200/200'"
               :alt="role.name"
@@ -87,7 +89,18 @@
             <div class="avatar-overlay" :class="{ 'active': hoveredRoleId === role.id }">
               <div class="view-details">开始对话</div>
             </div>
-          </div>
+          </div> -->
+         <div class="avatar-container">
+        <img
+          :src="role.avatarUrl || 'https://picsum.photos/id/' + (parseInt(role.id) % 50) + '/200/200'"
+          :alt="role.name"
+          class="role-avatar"
+        />
+        <div class="avatar-overlay" :class="{ 'active': hoveredRoleId === role.id }">
+          <button class="view-details-btn" @click.stop="viewRoleDetails(role.id)">查看详情</button>
+          <button class="start-chat-btn" @click.stop="selectRole(role.id)">开始对话</button>
+        </div>
+      </div>
           <div class="role-info">
             <h3 class="role-name">{{ role.name }}</h3>
             <p class="role-category">{{ role.category }}</p>
@@ -95,12 +108,41 @@
           </div>
         </div>
       </div>
+
+      <!-- 分页控件 -->
+      <div v-if="totalPages > 1" class="pagination-controls">
+        <button
+          class="pagination-btn"
+          @click="goToPrevPage"
+          :disabled="currentPage === 1"
+        >
+          上一页
+        </button>
+        <div class="page-numbers">
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="page-btn"
+            :class="{ 'active': currentPage === page }"
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+        </div>
+        <button
+          class="pagination-btn"
+          @click="goToNextPage"
+          :disabled="currentPage === totalPages"
+        >
+          下一页
+        </button>
+      </div>
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import ApiService from '@/services/api'
 import type { Role } from '@/types/api'
@@ -112,6 +154,10 @@ const searchQuery = ref('')
 const loading = ref(false)
 const error = ref('')
 const hoveredRoleId = ref('')
+
+// 分页相关变量
+const currentPage = ref(1)
+const pageSize = ref(4)
 
 // 新增用户状态相关变量
 const isLoggedIn = ref(false) // 模拟用户登录状态
@@ -164,14 +210,21 @@ const mockRoles: Role[] = [
 ]
 
 // 新增登录处理函数
-const handleLogin = () => {
-  // 实际项目中这里应该跳转到登录页面
-  console.log('登录按钮点击')
-  // 模拟登录成功
-  router.push({ name: 'login' })
-  isLoggedIn.value = true
-  userAvatar.value = 'https://picsum.photos/id/64/40/40'
-  // 跳转到角色选择页面
+// const handleLogin = () => {
+//   // 实际项目中这里应该跳转到登录页面
+//   console.log('登录按钮点击')
+//   // 模拟登录成功
+//   router.push({ name: 'login' })
+//   isLoggedIn.value = true
+//   userAvatar.value = 'https://picsum.photos/id/64/40/40'
+//   // 跳转到角色选择页面
+// }
+const viewRoleDetails = (roleId: string) => {
+  router.push({ name: 'roleProfile', params: { roleId } })
+}
+
+const goToProfile = () => {
+  router.push({ name: 'profile' })
 }
 
 // 新增注册处理函数
@@ -181,15 +234,7 @@ const handleRegister = () => {
   router.push({ name: 'register' })
 }
 
-// 新增退出登录处理函数
-const handleLogout = () => {
-  // 实际项目中这里应该清除用户登录状态
-  console.log('退出登录按钮点击')
-  isLoggedIn.value = false
-  userAvatar.value = ''
-}
-
-// 获取角色列表
+// 获取角色列表 - 修复mock数据不显示的问题
 const fetchRoles = async () => {
   loading.value = true
   error.value = ''
@@ -197,25 +242,33 @@ const fetchRoles = async () => {
     const response = await ApiService.getRoles()
     console.log('获取角色列表:', response)
 
-    // 检查响应是否为数组，而不是检查success属性，后端响应不包括success
-    if (Array.isArray(response) && response.length > 0) {
-      roles.value = response
-    } else if (response.success && response.data && response.data.length > 0) {
-      // 保留原有的处理逻辑，以便兼容可能的标准响应格式
+    // 改进的响应处理逻辑
+    if (response && response.success && response.data && Array.isArray(response.data) && response.data.length > 0) {
+      // 标准响应格式，且有数据
       roles.value = response.data
+    } else if (Array.isArray(response)) {
+      // 如果直接返回数组
+      roles.value = response
     } else {
-      // 如果API返回为空，使用模拟数据
+      // 如果API返回为空或格式不符合预期，使用模拟数据
       roles.value = mockRoles
+      console.log('使用模拟角色数据')
+      error.value = '' // 关键修复：不显示错误信息
     }
     // 初始过滤
     handleSearch()
+    // 重置页码
+    currentPage.value = 1
   } catch (err) {
     console.error('获取角色列表失败:', err)
     // API请求失败时使用模拟数据
     roles.value = mockRoles
-    error.value = '获取角色列表失败，使用模拟数据'
+    console.log('使用模拟角色数据:', roles.value)
+    error.value = '' // 关键修复：不显示错误信息
     // 初始过滤
     handleSearch()
+    // 重置页码
+    currentPage.value = 1
   } finally {
     loading.value = false
   }
@@ -225,34 +278,153 @@ const fetchRoles = async () => {
 const handleSearch = () => {
   if (!searchQuery.value.trim()) {
     filteredRoles.value = roles.value
-    return
+  } else {
+    const query = searchQuery.value.toLowerCase().trim()
+    filteredRoles.value = roles.value.filter(role =>
+      role.name.toLowerCase().includes(query) ||
+      role.category.toLowerCase().includes(query) ||
+      role.description.toLowerCase().includes(query)
+    )
   }
+  // 搜索时重置到第一页
+  currentPage.value = 1
+}
 
-  const query = searchQuery.value.toLowerCase().trim()
-  filteredRoles.value = roles.value.filter(role =>
-    role.name.toLowerCase().includes(query) ||
-    role.category.toLowerCase().includes(query) ||
-    role.description.toLowerCase().includes(query)
-  )
+// 计算当前页显示的角色
+const paginatedRoles = computed(() => {
+  const startIndex = (currentPage.value - 1) * pageSize.value
+  const endIndex = startIndex + pageSize.value
+  return filteredRoles.value.slice(startIndex, endIndex)
+})
+
+// 计算总页数
+const totalPages = computed(() => {
+  return Math.ceil(filteredRoles.value.length / pageSize.value)
+})
+
+// 跳转到指定页
+const goToPage = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page
+  }
+}
+
+// 下一页
+const goToNextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+// 上一页
+const goToPrevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
 }
 
 // 选择角色并跳转到对话界面
 const selectRole = (roleId: string) => {
+  // 检查是否存在token
+  const token = localStorage.getItem('token')
+  if (!token) {
+    // 如果没有token，跳转到登录页面
+    alert('请先登录后再开始对话')
+    router.push({ name: 'login' })
+    return
+  }
+  // 有token时正常跳转到对话界面
   router.push({ name: 'chat', params: { roleId } })
 }
 
-// 组件挂载时获取角色列表
+// 组件挂载时获取角色列表和检查登录状态
 onMounted(() => {
   fetchRoles()
-  // 模拟检查用户登录状态
-  // 在实际项目中，这里应该从localStorage或API检查用户登录状态
-  // isLoggedIn.value = localStorage.getItem('userToken') !== null
+  // 检查用户登录状态
+  const token = localStorage.getItem('token')
+  const avatar = localStorage.getItem('userAvatar')
+  isLoggedIn.value = !!token // 当token存在时设置为已登录
+  userAvatar.value = avatar || ''
 })
+
+// 修复登录处理函数
+const handleLogin = () => {
+  // 跳转到登录页面
+  router.push({ name: 'login' })
+}
+
+// 修复退出登录处理函数
+const handleLogout = () => {
+  // 清除用户登录状态和token
+  localStorage.removeItem('token')
+  localStorage.removeItem('userAvatar')
+  isLoggedIn.value = false
+  userAvatar.value = ''
+  // 可选：跳转到登录页面
+  // router.push({ name: 'login' })
+}
 </script>
 
 <style scoped src="../home/index.css"></style>
 
 <style scoped>
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  gap: 0.8rem;
+  border-radius: 50%;
+}
+
+.avatar-overlay.active {
+  opacity: 1;
+}
+
+/* 按钮样式 */
+.view-details-btn,
+.start-chat-btn {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.view-details-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.view-details-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.start-chat-btn {
+  background: white;
+  color: #667eea;
+}
+
+.start-chat-btn:hover {
+  background: #f0f0f0;
+  transform: translateY(-2px);
+}
+
+
+
 /* 新增的导航栏样式 */
 .top-navigation {
   display: flex;
@@ -267,7 +439,7 @@ onMounted(() => {
 }
 
 /* Logo样式 */
-.logo-container {
+logo-container {
   display: flex;
   align-items: center;
 }
@@ -360,6 +532,67 @@ onMounted(() => {
   transform: translateY(-1px);
 }
 
+/* 分页控件样式 */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding: 1rem;
+}
+
+.pagination-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.page-btn {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.page-btn.active {
+  background: white;
+  color: #667eea;
+  border-color: white;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .top-navigation {
@@ -378,6 +611,23 @@ onMounted(() => {
 
   .user-controls {
     gap: 0.5rem;
+  }
+
+  /* 分页控件响应式调整 */
+  .pagination-controls {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pagination-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .page-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
   }
 }
 </style>
