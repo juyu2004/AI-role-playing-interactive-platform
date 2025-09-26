@@ -10,7 +10,10 @@
             <path d="M2 17L12 22L22 17" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
             <path d="M2 12L12 17L22 12" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          <span class="logo-text">AI角色对话</span>
+          <div class="logo-text-container">
+            <span class="logo-text">EchoIsland</span>
+            <span class="logo-subtitle">每个角色是一座岛屿，每段对话是一场航程。</span>
+          </div>
         </div>
       </div>
 
@@ -447,9 +450,23 @@ logo-container {
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.75rem;
+  cursor: pointer;
 }
 
+.logo-text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo-subtitle {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 300;
+  margin-top: 0.25rem;
+  text-align: center;
+}
 .logo-text {
   color: white;
   font-size: 1.5rem;
