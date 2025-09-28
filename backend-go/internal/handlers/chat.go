@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
+	"unicode"
 
 	"ai-role-playing-platform/backend-go/internal/app"
 	"ai-role-playing-platform/backend-go/internal/models"
@@ -54,7 +56,7 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// Strengthen system prompt: enforce language and persona
-	systemPrompt := role.Prompt + "\n\n[指令]\n- 一律使用简体中文回答。\n- 避免无意义的前缀/问候，直接围绕用户问题作答。\n- 回答不超过 3 段，每段不超过 2 句。\n"
+	systemPrompt := role.Prompt + "\n\n[指令]\n- 一律使用简体中文回答。\n- 严禁自我介绍/重复问候（如“我是" + role.Name + "，很高兴…”），除非用户明确询问“你是谁”。\n- 直接围绕用户问题作答，避免铺垫与客套。\n- 回答不超过 3 段，每段不超过 2 句。\n"
 	userText := req.Text
 	if history != "" {
 		userText = "对话历史（供参考，不要重复）：\n" + history + "\n当前用户：" + req.Text
@@ -62,8 +64,9 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	router := services.ProviderRouter{}
 	provider := router.ResolveProvider(role.ID)
 	reply, _ := provider.Generate(systemPrompt, userText)
+	reply = sanitizeChinese(stripGreetings(reply, role.Name))
 	resp := models.ChatResponse{Text: reply, AudioURL: nil}
-	// Persist if authenticated and DB configured; reuse or create conversation
+	// Persist if authenticated and DB configured; reuse latest conversation by user+role when未提供 conversationId
 	if app.DB != nil {
 		if user, _ := r.Context().Value("user").(string); user != "" {
 			convRepo := rdb.NewConversationRepo(app.DB)
@@ -72,8 +75,12 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 			if req.ConversationID != "" {
 				convID = req.ConversationID
 			} else {
-				conv, _ := convRepo.Create(user, req.RoleID)
-				convID = conv.ID
+				if existing, err := convRepo.GetLatestByUserRole(user, req.RoleID); err == nil && existing != nil {
+					convID = existing.ID
+				} else {
+					conv, _ := convRepo.Create(user, req.RoleID)
+					convID = conv.ID
+				}
 			}
 			_, _ = msgRepo.Create(convID, "user", req.Text)
 			_, _ = msgRepo.Create(convID, "role", reply)
@@ -129,7 +136,7 @@ func HandleChatStream(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	systemPrompt := role.Prompt + "\n\n[指令]\n- 一律使用简体中文回答。\n- 避免无意义的前缀/问候，直接围绕用户问题作答。\n- 回答不超过 3 段，每段不超过 2 句。\n"
+	systemPrompt := role.Prompt + "\n\n[指令]\n- 一律使用简体中文回答。\n- 严禁自我介绍/重复问候（如“我是" + role.Name + "，很高兴…”），除非用户明确询问“你是谁”。\n- 直接围绕用户问题作答，避免铺垫与客套。\n- 回答不超过 3 段，每段不超过 2 句。\n"
 	userText := req.Text
 	if history != "" {
 		userText = "对话历史（供参考，不要重复）：\n" + history + "\n当前用户：" + req.Text
@@ -142,6 +149,7 @@ func HandleChatStream(w http.ResponseWriter, r *http.Request) {
 		flusher.Flush()
 		return
 	}
+	reply = sanitizeChinese(stripGreetings(reply, role.Name))
 	const chunkSize = 120
 	for i := 0; i < len(reply); i += chunkSize {
 		end := i + chunkSize
@@ -164,4 +172,59 @@ func escapeForSSE(s string) string {
 		return string(b[1 : len(b)-1])
 	}
 	return string(b)
+}
+
+// sanitizeChinese 过滤英文代码感强的片段与异常符号，尽量输出中文与常用标点
+var (
+	reAlphaSeq = regexp.MustCompile(`[A-Za-z_]{3,}`)
+	reWeird    = regexp.MustCompile("[`~@#$%^*_=<>\\{}\\[\\]|]+")
+)
+
+func sanitizeChinese(s string) string {
+	// 如果中文占比很低，先删除长英文串与怪异符号
+	total := 0
+	han := 0
+	for _, r := range s {
+		total++
+		if unicode.Is(unicode.Han, r) {
+			han++
+		}
+	}
+	cleaned := s
+	if total == 0 {
+		return s
+	}
+	ratio := float64(han) / float64(total)
+	if ratio < 0.7 {
+		cleaned = reAlphaSeq.ReplaceAllString(cleaned, "")
+		cleaned = reWeird.ReplaceAllString(cleaned, "")
+	}
+	// 常见伪代码/占位词清理
+	tokens := []string{"return", "args", "NIL", "epoch", "Talk", "cups"}
+	for _, t := range tokens {
+		cleaned = regexp.MustCompile(`(?i)`+regexp.QuoteMeta(t)).ReplaceAllString(cleaned, "")
+	}
+	// 收尾：去掉多余空格
+	// 简化连续空格
+	cleaned = regexp.MustCompile(`\s{2,}`).ReplaceAllString(cleaned, " ")
+	return cleaned
+}
+
+// stripGreetings 去除模型常见的自我介绍与客套话
+func stripGreetings(s, roleName string) string {
+	patterns := []string{
+		`^\s*我是[^，。,!！]*[，。,!！]\s*`,
+		`^\s*我叫[^，。,!！]*[，。,!！]\s*`,
+		`^\s*很高兴[^。.!！]*[。.!！]\s*`,
+	}
+	if roleName != "" {
+		patterns = append(patterns, `^\s*我是\s*`+regexp.QuoteMeta(roleName)+`[^。.!！]*[。.!！]\s*`)
+	}
+	out := s
+	for _, p := range patterns {
+		out = regexp.MustCompile(p).ReplaceAllString(out, "")
+	}
+	// 句首若仍为空客套字词，裁掉
+	out = regexp.MustCompile(`^(大家好|您好|你好)[，,\s]*`).ReplaceAllString(out, "")
+	return out
 }

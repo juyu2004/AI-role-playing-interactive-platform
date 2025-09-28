@@ -40,6 +40,16 @@ func (r *ConversationRepo) Create(userID, roleID string) (repo.Conversation, err
 	return repo.Conversation{ID: id, UserID: userID, RoleID: roleID}, nil
 }
 
+func (r *ConversationRepo) GetLatestByUserRole(userID, roleID string) (*repo.Conversation, error) {
+	log.Printf("db: conversations GetLatestByUserRole userID=%s roleID=%s", userID, roleID)
+	var c repo.Conversation
+	err := r.db.QueryRow(`SELECT id, user_id, role_id FROM conversations WHERE user_id=$1 AND role_id=$2 ORDER BY created_at DESC LIMIT 1`, userID, roleID).Scan(&c.ID, &c.UserID, &c.RoleID)
+	if err != nil {
+		return nil, err
+	}
+	return &c, nil
+}
+
 func (r *ConversationRepo) ReassignUserData(fromUserID, toUserID string) error {
 	log.Printf("db: conversations ReassignUserData from=%s to=%s", fromUserID, toUserID)
 	tx, err := r.db.Begin()

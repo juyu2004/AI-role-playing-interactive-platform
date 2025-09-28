@@ -52,3 +52,17 @@ func (r *ConversationRepo) ReassignUserData(fromUserID, toUserID string) error {
 	}
 	return nil
 }
+
+func (r *ConversationRepo) GetLatestByUserRole(userID, roleID string) (*repo.Conversation, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	// items 按插入时间递增，末尾更“新”
+	for i := len(r.items) - 1; i >= 0; i-- {
+		c := r.items[i]
+		if c.UserID == userID && c.RoleID == roleID {
+			cc := c
+			return &cc, nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
+}

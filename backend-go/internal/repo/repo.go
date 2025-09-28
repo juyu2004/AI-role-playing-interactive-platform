@@ -42,6 +42,7 @@ type ConversationRepository interface {
 	ListByUser(userID string, limit, offset int) ([]Conversation, error)
 	Create(userID, roleID string) (Conversation, error)
 	ReassignUserData(fromUserID, toUserID string) error
+	GetLatestByUserRole(userID, roleID string) (*Conversation, error)
 }
 
 type MessageRepository interface {
