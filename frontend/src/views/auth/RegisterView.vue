@@ -149,7 +149,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-// import ApiService from '@/services/api'
+import ApiService from '@/services/api'
+import type { LoginApiResponse, BaseResponse, LoginResponse } from '@/types/api'
 
 const router = useRouter()
 
@@ -258,26 +259,50 @@ const handleRegister = async () => {
     return
   }
 
-// 注册（占位）username email password comfirmPassword
   try {
     isLoading.value = true
-    // const response = await ApiService.register({
-    //   email: username.value,
-    //   password: password.value
-    // })
+    // 调用注册API
+    const response: LoginApiResponse = await ApiService.register({
+      email: email.value,
+      password: password.value
+    })
+    console.log('简化格式响应:', response)
+    // 处理响应（兼容不同的响应格式）
+    let token = ''
+    if ('data' in response) {
+      // 标准格式 BaseResponse<LoginResponse>
+      const baseResponse = response as BaseResponse<LoginResponse>
+      if (baseResponse.data && baseResponse.data.token) {
+        token = baseResponse.data.token
+      }
+    } else {
+      token = response.token
+    }
 
-    // 模拟注册请求
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    if (!token) {
+      throw new Error('注册失败：未返回有效的令牌')
+    }
 
     // 注册成功后，存储用户信息并跳转
-    localStorage.setItem('userToken', 'mock-token')
+    localStorage.setItem('token', token) // 修改为'token'
     localStorage.setItem('userAvatar', 'https://picsum.photos/id/64/40/40')
+    localStorage.setItem('username', username.value)
+    localStorage.setItem('userEmail', email.value)
 
     // 跳转到角色选择页面
     router.push({ name: 'roleSelect' })
   } catch (error) {
     console.error('注册失败:', error)
-    // 错误提示 (占位)
+    // 显示错误信息
+    let errorMessage = '注册失败，请稍后重试'
+
+    // 尝试解析错误响应（避免使用any）
+    if (error instanceof Error) {
+      errorMessage = error.message
+    }
+
+    // 这里可以添加一个全局的错误提示组件
+    alert(errorMessage)
   } finally {
     isLoading.value = false
   }

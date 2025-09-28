@@ -94,3 +94,36 @@ export interface Conversation {
   lastMessage?: string
   lastMessageTime?: string
 }
+
+// 用户信息类型
+export interface User {
+  id: string
+  email: string
+  avatarUrl?: string | null
+  bio?: string | null
+}
+
+// 更新头像请求类型
+export interface UpdateAvatarRequest {
+  avatarUrl?: string | null
+}
+
+// 更新简介请求类型
+export interface UpdateBioRequest {
+  bio?: string | null
+}
+
+// 好友列表响应类型
+export interface FriendsResponse {
+  friends: string[]
+}
+
+// 添加好友请求类型
+export interface AddFriendRequest {
+  friendUserId: string
+}
+
+// 重新分配用户数据请求类型
+export interface ReassignUserDataRequest {
+  toUserId: string
+}
