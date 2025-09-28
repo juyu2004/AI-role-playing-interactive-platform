@@ -63,8 +63,14 @@ func HandleChat(w http.ResponseWriter, r *http.Request) {
 	}
 	router := services.ProviderRouter{}
 	provider := router.ResolveProvider(role.ID)
-	reply, _ := provider.Generate(systemPrompt, userText)
-	reply = sanitizeChinese(stripGreetings(reply, role.Name))
+	reply, err := provider.Generate(systemPrompt, userText)
+	if err != nil {
+		// 如果API调用失败，返回错误信息
+		reply = "抱歉,我暂时无法回答这个问题。"
+		fmt.Printf("API调用失败: %v\n", err)
+	} else {
+		reply = sanitizeChinese(stripGreetings(reply, role.Name))
+	}
 	resp := models.ChatResponse{Text: reply, AudioURL: nil}
 	// Persist if authenticated and DB configured; reuse latest conversation by user+role when未提供 conversationId
 	if app.DB != nil {
@@ -145,11 +151,12 @@ func HandleChatStream(w http.ResponseWriter, r *http.Request) {
 	provider := router.ResolveProvider(role.ID)
 	reply, err := provider.Generate(systemPrompt, userText)
 	if err != nil {
-		_, _ = w.Write([]byte("event: error\ndata: generation failed\n\n"))
-		flusher.Flush()
-		return
+		// 如果API调用失败，返回错误信息
+		reply = "抱歉,我暂时无法回答这个问题。"
+		fmt.Printf("API调用失败: %v\n", err)
+	} else {
+		reply = sanitizeChinese(stripGreetings(reply, role.Name))
 	}
-	reply = sanitizeChinese(stripGreetings(reply, role.Name))
 	const chunkSize = 120
 	for i := 0; i < len(reply); i += chunkSize {
 		end := i + chunkSize
