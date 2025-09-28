@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"ai-role-playing-platform/backend-go/internal/app"
 	"ai-role-playing-platform/backend-go/internal/config"
@@ -75,7 +76,14 @@ func main() {
 
 	handler := withCORS(cfg.AllowedOrigins, middleware.RateLimit(100)(middleware.Logging(mux)))
 	log.Printf("Go backend listening on :%s", cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, handler); err != nil {
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      handler,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

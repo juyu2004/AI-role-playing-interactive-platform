@@ -12,11 +12,13 @@ type Role struct {
 }
 
 type ChatRequest struct {
-	RoleID string `json:"roleId"`
-	Text   string `json:"text"`
+	RoleID         string `json:"roleId"`
+	Text           string `json:"text"`
+	ConversationID string `json:"conversationId,omitempty"`
 }
 
 type ChatResponse struct {
-	Text     string  `json:"text"`
-	AudioURL *string `json:"audioUrl"`
+	Text           string  `json:"text"`
+	AudioURL       *string `json:"audioUrl"`
+	ConversationID string  `json:"conversationId,omitempty"`
 }
