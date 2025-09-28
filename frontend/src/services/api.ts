@@ -142,6 +142,15 @@ class ApiService {
       }
     })
   }
+
+  /**
+   * 用户注册
+   * 创建新用户账户并获取访问令牌
+   * @param params 注册请求参数，包含邮箱和密码
+   */
+  public static async register(params: LoginRequest): Promise<LoginApiResponse> {
+    return request.post<LoginResponse>('/api/auth/register', params)
+  }
 }
 
 export default ApiService
